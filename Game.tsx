@@ -39,71 +39,72 @@ function Game({ onScore, onHit }: GameProps) {
       });
     };
 
-    const update = () => {
-      if (!gameRef.current?.running) return;
+    // Move bullets and remove off-screen ones
+    const updateBullets = () => {
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        bullets[i].y -= 10;
+        if (bullets[i].y < 0) bullets.splice(i, 1);
+      }
+    };
 
-      // Player movement
+    // Check if a bullet hits an enemy (AABB)
+    const bulletHitsEnemy = (
+      b: { x: number; y: number },
+      e: { x: number; y: number; width: number; height: number },
+    ) =>
+      b.x > e.x - e.width / 2 &&
+      b.x < e.x + e.width / 2 &&
+      b.y > e.y - e.height / 2 &&
+      b.y < e.y + e.height / 2;
+
+    // Check if enemy overlaps player
+    const enemyHitsPlayer = (e: { x: number; y: number; width: number; height: number }) =>
+      Math.abs(e.x - player.x) < (e.width + player.width) / 2 &&
+      Math.abs(e.y - player.y) < (e.height + player.height) / 2;
+
+    // Check bullet-enemy collisions; returns true if enemy was destroyed
+    const checkBulletCollisions = (enemyIdx: number): boolean => {
+      const e = enemies[enemyIdx];
+      for (let j = bullets.length - 1; j >= 0; j--) {
+        if (bulletHitsEnemy(bullets[j], e)) {
+          enemies.splice(enemyIdx, 1);
+          bullets.splice(j, 1);
+          onScore(10);
+          return true;
+        }
+      }
+      return false;
+    };
+
+    // Process a single enemy: returns true if enemy was removed
+    const processEnemy = (i: number): boolean => {
+      enemies[i].y += enemies[i].speed;
+      if (checkBulletCollisions(i)) return true;
+      if (!enemies[i]) return true;
+      if (enemies[i].y > H) { enemies.splice(i, 1); onHit(); return true; }
+      if (enemyHitsPlayer(enemies[i])) { enemies.splice(i, 1); onHit(); return true; }
+      return false;
+    };
+
+    // Update player movement and shooting
+    const updatePlayer = () => {
       if (keys.left) player.x -= 6;
       if (keys.right) player.x += 6;
       player.x = Math.max(20, Math.min(W - 20, player.x));
-
-      // Shooting
       if (keys.shoot && shootCooldown <= 0) {
         bullets.push({ x: player.x, y: player.y - 20 });
         shootCooldown = 15;
       }
       shootCooldown--;
+    };
 
-      // Update bullets
-      for (let i = bullets.length - 1; i >= 0; i--) {
-        bullets[i].y -= 10;
-        if (bullets[i].y < 0) bullets.splice(i, 1);
-      }
-
-      // Spawn enemies
+    const update = () => {
+      if (!gameRef.current?.running) return;
+      updatePlayer();
+      updateBullets();
       spawnTimer++;
-      if (spawnTimer > 60) {
-        spawnEnemy();
-        spawnTimer = 0;
-      }
-
-      // Update enemies
-      for (let i = enemies.length - 1; i >= 0; i--) {
-        enemies[i].y += enemies[i].speed;
-
-        // Check bullet collision
-        for (let j = bullets.length - 1; j >= 0; j--) {
-          const e = enemies[i];
-          const b = bullets[j];
-          if (b && e &&
-            b.x > e.x - e.width / 2 &&
-            b.x < e.x + e.width / 2 &&
-            b.y > e.y - e.height / 2 &&
-            b.y < e.y + e.height / 2
-          ) {
-            enemies.splice(i, 1);
-            bullets.splice(j, 1);
-            onScore(10);
-            break;
-          }
-        }
-
-        // Check if enemy reached bottom
-        if (enemies[i] && enemies[i].y > H) {
-          enemies.splice(i, 1);
-          onHit();
-        }
-
-        // Check player collision
-        const e = enemies[i];
-        if (e &&
-          Math.abs(e.x - player.x) < (e.width + player.width) / 2 &&
-          Math.abs(e.y - player.y) < (e.height + player.height) / 2
-        ) {
-          enemies.splice(i, 1);
-          onHit();
-        }
-      }
+      if (spawnTimer > 60) { spawnEnemy(); spawnTimer = 0; }
+      for (let i = enemies.length - 1; i >= 0; i--) processEnemy(i);
     };
 
     const draw = () => {
@@ -153,16 +154,20 @@ function Game({ onScore, onHit }: GameProps) {
     };
     gameLoop();
 
+    const shooterKeyMap: Record<string, keyof typeof keys> = {
+      ArrowLeft: 'left', KeyA: 'left',
+      ArrowRight: 'right', KeyD: 'right',
+      Space: 'shoot',
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
-      if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
-      if (e.code === 'Space') { keys.shoot = true; e.preventDefault(); }
+      const k = shooterKeyMap[e.code];
+      if (k) { keys[k] = true; if (k === 'shoot') e.preventDefault(); }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
-      if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
-      if (e.code === 'Space') keys.shoot = false;
+      const k = shooterKeyMap[e.code];
+      if (k) keys[k] = false;
     };
 
     window.addEventListener('keydown', handleKeyDown);

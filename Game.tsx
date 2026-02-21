@@ -15,13 +15,15 @@ function Game({ onScore, onHit }: GameProps) {
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d')!;
-    const W = canvas.width = 600;
-    const H = canvas.height = 700;
+    canvas.width = 600;
+    canvas.height = 700;
+    const W = canvas.width;
+    const H = canvas.height;
 
     const player = { x: W / 2, y: H - 60, width: 40, height: 40 };
     const bullets: { x: number; y: number }[] = [];
     const enemies: { x: number; y: number; width: number; height: number; speed: number }[] = [];
-    let keys = { left: false, right: false, shoot: false };
+    const keys = { left: false, right: false, shoot: false };
     let shootCooldown = 0;
     let spawnTimer = 0;
 

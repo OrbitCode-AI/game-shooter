@@ -1,8 +1,8 @@
-import './HUD.css';
+import './HUD.css'
 
 interface HUDProps {
-  score: number;
-  lives: number;
+  score: number
+  lives: number
 }
 
 function HUD({ score, lives }: HUDProps) {
@@ -16,12 +16,14 @@ function HUD({ score, lives }: HUDProps) {
         <span className="hud-label">LIVES</span>
         <span className="hud-value lives">
           {Array.from({ length: lives }).map((_, i) => (
-            <span key={i} className="life-heart">❤️</span>
+            <span key={i} className="life-heart">
+              ❤️
+            </span>
           ))}
         </span>
       </div>
     </div>
-  );
+  )
 }
 
 // Default export renders component in isolation for preview
@@ -30,7 +32,7 @@ export default function HUDPreview() {
     <div className="preview-container">
       <HUD score={1250} lives={3} />
     </div>
-  );
+  )
 }
 
-export { HUD };
+export { HUD }

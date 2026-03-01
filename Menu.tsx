@@ -1,11 +1,11 @@
-import './Menu.css';
+import './Menu.css'
 
 interface MenuProps {
-  title: string;
-  score?: number;
-  highScore?: number;
-  onStart: () => void;
-  buttonText?: string;
+  title: string
+  score?: number
+  highScore?: number
+  onStart: () => void
+  buttonText?: string
 }
 
 function Menu({ title, score, highScore, onStart, buttonText = 'Play' }: MenuProps) {
@@ -14,9 +14,7 @@ function Menu({ title, score, highScore, onStart, buttonText = 'Play' }: MenuPro
       <div className="menu-content">
         <span className="menu-icon">🚀</span>
         <h1 className="menu-title">{title}</h1>
-        {score !== undefined && (
-          <p className="menu-score">Score: {score}</p>
-        )}
+        {score !== undefined && <p className="menu-score">Score: {score}</p>}
         {highScore !== undefined && highScore > 0 && (
           <p className="menu-highscore">High Score: {highScore}</p>
         )}
@@ -29,18 +27,12 @@ function Menu({ title, score, highScore, onStart, buttonText = 'Play' }: MenuPro
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 // Default export renders component in isolation for preview
 export default function MenuPreview() {
-  return (
-    <Menu
-      title="Space Defender"
-      highScore={500}
-      onStart={() => alert('Starting!')}
-    />
-  );
+  return <Menu title="Space Defender" highScore={500} onStart={() => alert('Starting!')} />
 }
 
-export { Menu };
+export { Menu }
